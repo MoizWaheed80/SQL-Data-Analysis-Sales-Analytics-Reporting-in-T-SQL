@@ -1,6 +1,6 @@
 # SQL Data Analysis
 
-A collection of SQL scripts for data exploration, analytics, and reporting on a sales data warehouse. The scripts cover time-based trends, cumulative analytics, performance comparisons, segmentation, part-to-whole analysis, and a consolidated customer report.
+A collection of SQL scripts for data exploration, analytics, and reporting on a sales data warehouse. The scripts cover time-based trends, cumulative analytics, performance comparisons, segmentation, part-to-whole analysis, and two reporting views: one for customers and one for products.
 
 Built to help data analysts and BI professionals quickly explore, segment, and analyze data within a relational database. Each script focuses on one analytical theme and is written in T-SQL for SQL Server.
 
@@ -18,10 +18,11 @@ sql-data-analysis/
 │   ├── Percentage_total.sql          # Category share of total sales
 │   ├── Division by group.sql         # Products grouped into cost ranges
 │   ├── Customer classification.sql   # VIP / Regular / New customer counts
-│   └── Report.sql                    # Consolidated customer report
+│   └── Report.sql                    # Customer report view (gold.report_Customer)
 │
 ├── Source/
-│   └── DataWarehouseAnalytics.bak    # SQL Server database backup
+│   ├── DataWarehouseAnalytics.bak    # SQL Server database backup
+│   └── Report2.sql                   # Product report view (gold.Report2)
 │
 └── README.md
 ```
@@ -39,12 +40,15 @@ sql-data-analysis/
 | `Division by group.sql` | Data segmentation | How is product cost distributed across price bands? |
 | `Customer classification.sql` | Data segmentation | How many customers are VIP, Regular, or New? |
 | `Report.sql` | Reporting | What does a full customer profile look like with KPIs? |
+| `Report2.sql` | Reporting | How is each product performing across sales, customers, and time? |
 
 ---
 
-## 👥 Customer Report (`Report.sql`)
+## 📈 Reports
 
-Combines everything into one customer level output:
+Both reports are saved as views, so they plug straight into Power BI or any BI tool.
+
+### 👥 Customer Report: `gold.report_Customer` (`Scripts/Report.sql`)
 
 - **Profile:** customer key, number, full name, age
 - **Age groups:** Under 20, 20-29, 30-39, 40-49, 50+
@@ -55,7 +59,15 @@ Combines everything into one customer level output:
 - **Aggregates:** total orders, sales, quantity, distinct products, lifespan in months
 - **KPIs:** days since last order (recency), average order value, average monthly spend
 
-Ready to wrap in a view and plug into Power BI.
+### 📦 Product Report: `gold.Report2` (`Source/Report2.sql`)
+
+- **Attributes:** product key, name, category, subcategory, cost
+- **Segments:**
+  - **High-Performer:** total sales over 50,000
+  - **Mid-Range:** total sales from 10,000 to 50,000
+  - **Low-Performer:** total sales under 10,000
+- **Aggregates:** total orders, customers, sales, quantity, lifespan in months, last sale date
+- **KPIs:** days since last order (recency), average order revenue, average monthly revenue, average selling price
 
 ---
 
@@ -67,6 +79,8 @@ Ready to wrap in a view and plug into Power BI.
 - `CASE WHEN` for segmentation and banding
 - CTEs and nested subqueries for step-by-step logic
 - Percent of total with `SUM() OVER ()`
+- `CREATE VIEW` for a reusable, BI-ready reporting layer
+- `NULLIF` and `CASE` guards against divide by zero
 
 ---
 
@@ -76,9 +90,9 @@ Star schema in the `gold` layer:
 
 | Table | Description |
 |-------|-------------|
-| `gold.fact_sale` | Order level sales: order date, quantity, price, sales amount |
-| `gold.dim_customer` | Customer attributes: name, customer number, birth date |
-| `gold.dim_product` | Product attributes: name, category, cost |
+| `gold.fact_sale` | Order level sales: order key, order date, quantity, price, sales amount |
+| `gold.dim_customer` | Customer attributes: customer id, number, name, birth date |
+| `gold.dim_product` | Product attributes: name, category, subcategory, cost |
 
 ---
 
@@ -95,7 +109,13 @@ Star schema in the `gold` layer:
    ```
 2. Copy `Source/DataWarehouseAnalytics.bak` to your SQL Server backup folder
 3. In SSMS, right click **Databases** > **Restore Database** > **Device**, then select the `.bak` file
-4. Open any script from `Scripts/` and run it against the restored database
+4. Run the analysis scripts in `Scripts/`
+5. Run `Scripts/Report.sql` and `Source/Report2.sql` to create the reporting views
+6. Query the views
+   ```sql
+   SELECT * FROM gold.report_Customer;
+   SELECT * FROM gold.Report2;
+   ```
 
 ---
 
