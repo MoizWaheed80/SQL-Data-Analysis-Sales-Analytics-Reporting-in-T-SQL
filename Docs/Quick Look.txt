@@ -1,77 +1,107 @@
-1. praimery key (unique c_id)+ forign key if posible (one customer multi order)  --> constraint customer_pk primary key (id)      --> Row_number help create id                                     -->case when ... end as column_name
-2. create drop, alter table                                                                                                                                                                    -->Running total     like total Sale                                   -->Rolling total  ->30-day revenue moving average (or rolling average)
-3. insert into emp_detail (id, item, price,  emp)  select id, item, Null, 'unknown' from customer                                                        -->select * from (select * from count(1) over (partition by order_id) as cdp from order) t where cdp > 1 (check duplicate)  
+1. OLTP (Online Transaction Processing) → records daily transactions using INSERT, UPDATE, DELETE, e.g., a laptop sale in an ERP | OLAP (Online Analytical Processing) → analyzes data, often extracted from OLTP and organized into an analytical model, e.g., total laptop sales this year.
+2. Read performance → create index | Write performance → remove extra indexes (every index slows INSERT/UPDATE/DELETE + uses storage).
+
+1. praimery key (unique c_id)+ forign key if posible (one customer multi order)  --> constraint customer_pk primary key (id)                        --> Row_number help create id (pk)                              -->case when ... end as column_name
+2. create drop, alter table                                                                                                                                                                                      -->Running total     like total Sale                                   -->Rolling total  ->30-day revenue moving average (or rolling average)
+3. insert into emp_detail (id, item, price,  emp)  select id, item, Null, 'unknown' from customer                                                                          -->select * from (select *, count(1) over (partition by order_id) as cdp from order) t where cdp > 1 (check duplicate)  
 4. update customer set amount = 10 where id = 1                                                                                            
-5. truncate or delete from table where id = 1   (selective delete. Truncate is faster)                                                                         -->First select then verfy and delete
-6. between 100 and 500                                                                                                                                                                      -->country like ('us','uk')
-7. Like: M% start with M,   %M end with M,   %m% contains M,   M_i% M + one character + i + anything
-8. Use left join most of time.                                                                                                                                                               -->left anti means only left row no match in right          -->full anti join   --> all exept matching from both
-9. Union -> No duplicate,   All -> allow duplicate                                                                                                                             -->cross join --> 3X2 1 1, 2 1, 2 1, 2 2, 3 1, 3 2
-10. INTERSECT -->A ∩ B (common in both)                                                                                                                                     -->EXCEPT  --->  A − B (things in A that aren't in B)
-11. String  --> concat, upper, lower, trim, replace, len, leff & right, substing,                                                                                    -->Number funtion  --> Round, Abs
-12. date function --> month, day, year,                                                                                                                                               -->eomonth(date)  --> month, day, year
-15. datetrunc(part, date) --> year, quarter, month, week, day, hour, minute, second → truncates the date/time to the specified part.                     -->start of month                                  -->date_trunc('month', '2026-09-27 14:35:20')  --> 2026-09-01 00:00:00
+5. truncate or delete from table where id = 1   (selective delete. Truncate is faster)    -->First select then verfy and delete
+6. DROP TABLE IF EXISTS     -->IF OBJECT_ID('sale', 'U') IS NOT NULL DROP TABLE Sale
+7. Dimension vs Measure → ask 2 questions → Is it a number? Does it make sense to aggregate (SUM, AVG)? → both YES → Measure | any NO → Dimension          -->Trap → Customer ID, Phone, Zip Code are numbers but SUM(customer_id) makes no sense → Dimension
+8. Explore Database → INFORMATION_SCHEMA      -->All tables → SELECT * FROM INFORMATION_SCHEMA.TABLES      -->All columns of a table → SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Sale'       -->Shows → column name, data type, length, nullable → quick way to understand a new database.
+
+6. between 100 and 500                                                                                                                                                                                        -->country in('us','uk')
+7. Like: M% start with M,   %M end with M,   %m% contains M,   M_i% M + one character + i + anything                                                     
+
+8. Use left join most of time.                                                        -->left anti means only left row no match in right                                         -->full anti join   --> all exept matching from both
+9. Union -> No duplicate,   All -> allow duplicate                       -->CROSS JOIN → every possible combination → Black/White T-shirts × Small/Medium/Large → Black–Small, Black–Medium, Black–Large, White–Small, White–Medium, White–Large (2 × 3 = 6 rows)
+10. INTERSECT -->A ∩ B (common in both)                                                                                                                                                       -->EXCEPT  --->  A − B (things in A that aren't in B)
+
+11. String  --> concat, upper, lower, trim, replace, len, leff & right, substing,                                                                                                      -->Number funtion  --> Round, Abs
+12. CAST(value AS data_type) --> converts a value from one datatype to another → supports int, decimal, varchar, date, datetime, etc.
+
+12. date function --> month, day, year,                                                                                                                                                                -->eomonth(date)  --> month, day, year
+15. datetrunc(part, date) --> year, quarter, month, week, day, hour, minute, second → truncates the date/time to the specified part.            -->start of month:- date_trunc('month', '2026-09-27 14:35:20')  --> 2026-09-01 00:00:00
 13. datepart(part, date) --> year, quarter, month, day, week, weekday, hour, minute, second
 14. datename(part, date) --> year, quarter, month, day, week, weekday, hour, minute, second → month gives like January, February, and weekday gives like Monday, Tuesday. The others return numeric values as strings.
 16. FORMAT(value, format) --> dd as 01, ddd as Mon, dddd as Monday → supports (d, m, y)
-17. CAST(value AS data_type) --> converts a value from one datatype to another → supports int, decimal, varchar, date, datetime, etc.
-18. CONVERT(data_type, value, style) --> converts a value to another datatype and allows date/time formatting using a style                                -->23 → yyyy-mm-dd → 2026-09-20,            -->120 → yyyy-mm-dd hh:mi:ss → 2026-09-20 14:30:00
-19. dateadd(part, number, date) --> adds/subtracts an amount of time from a date                                                                                                  -->dateadd(day, 7, date) → add 7 days          -->supports (day, week, month, quarter, year, hour, minute, second)
-20. datediff(part, startdate, enddate) --> calculates the difference between two dates. Supports (day, week, month, quarter, year, hour, minute, second)                                                             -->datediff(day, '2026-09-01', '2026-09-20') → 19         
-21. isdate(value) --> checks whether a value is a valid date                                                                                                                                          --> isdate('2026-09-20') → 1 (valid), isdate('hello') → 0 (invalid)
-23. isnull(expression, replacement) --> replaces null with value                                                                                                                                   -->isnull(salary, 0) -> replaces null salary with 0                     -->isnull(salary, payment) -> if salary row is null, replaces with payment row
-24. coalesce(expression1, expression2, ...) --> returns the first non-null value                                                                                                              -->coalesce(salary, payment, 0) -> if salary is null, returns payment; if both are null, returns 0
-25. nullif(expression1, expression2) --> returns null if both expressions have the same value, otherwise returns the first value                                -->nullif(price, discount) -> if price = discount, returns null; if price ≠ discount, returns price
-26. is null --> checks if a value is null → where salary is null -> returns rows where salary has no value.                                                                    -->is not null --> checks if a value is not null → where salary is not null -> returns rows where salary has a value
-27. null --> no value / unknown value  |  empty --> '' (zero-length string)   | blank --> ' ' (space character)
-28. Window_function() over ([partition by column] [order by column] [rows between frame])  -->  [rows between] --> rows are [preceding] rows before the current row..  [following] rows after the current row..  [current row] the row being calculated currently..  [unbounded preceding] from the first row [unbounded following] to the last row.            --> Aggerigation funtion: count,sum,avg,min,max
-29. row_number() → Give me the latest/first one row per customer.                                    -->Rank() → Who came 1st, 2nd, 2nd, 4th in a competition?  like student mertit list                      -->dense_rank() → Give me the top 3 distinct salary levels.    highest sale each product
-30. ntile()       → divide rows into groups   (customer segmentation)                       percent_rank()→ where am I in the ranking?   (top performers)                     cume_dist()   → what % are at/below me?     
-31. lag(column [, offset]) → gets value from previous row; offset = rows back (default 1)   Current month vs previous month sales   Current salary vs previous salary    
-32. lead(column [, offset]) → gets value from following row; offset = rows forward (default 1)                                                                                 -->Loan repayment gaps                              -->days between a customer's orders; if the next order is NULL after 90 days, flag them as churned.   
+18. CONVERT(data_type, value, style) --> converts a value to another datatype and allows date/time formatting using a style    -->23 → yyyy-mm-dd → 2026-09-20    -->120 → yyyy-mm-dd hh:mi:ss → 2026-09-20 14:30:00
+19. dateadd(part, number, date) --> adds/subtracts an amount of time from a date       -->dateadd(day, 7, date) → add 7 days      -->supports (day, week, month, quarter, year, hour, minute, second)
+20. datediff(part, startdate, enddate) --> calculates the difference between two dates. Supports (day, week, month, quarter, year, hour, minute, second)          -->datediff(day, '2026-09-01', '2026-09-20') → 19         
+21. isdate(value) --> checks whether a value is a valid date             --> isdate('2026-09-20') → 1 (valid), isdate('hello') → 0 (invalid)
+
+23. isnull(expression, replacement) --> replaces null with value     -->isnull(salary, 0) -> replaces null salary with 0       -->isnull(salary, payment) -> if salary row is null, replaces with payment row
+24. coalesce(expression1, expression2, ...) --> returns the first non-null value         -->coalesce(salary, payment, 0) -> if salary is null, returns payment; if both are null, returns 0
+25. nullif(expression1, expression2) --> returns null if both expressions have the same value, otherwise returns the first value       -->nullif(price, discount) -> if price = discount, returns null; if price ≠ discount, returns price
+26. is null --> checks if a value is null → where salary is null -> returns rows where salary has no value.                                                               -->is not null --> checks if a value is not null → where salary is not null -> returns rows where salary has a value
+27. null --> no value / unknown value                                          -->empty --> '' (zero-length string)                                                                 -->blank --> ' ' (space character)
+Null handling --> handle null before aggregation, calculations, and joins → aggregation: avg(100, 200, null) = 150, but avg(100, 200, isnull(null, 0)) = 100 → calculation: 1 + null = null, 'abc' + null = null → use isnull/coalesce when null should be treated as a value → joining: null join keys do not match with =, so handle them carefully before joining       Ask compny null rule
+
+
+28. Window_function() over ([partition by column] [order by column] [rows between frame]):--  [rows between] --> rows are [preceding] rows before the current row..  [following] rows after the current row..  [current row] the row being calculated currently..  [unbounded preceding] from the first row [unbounded following] to the last row.                                  --> Aggerigation funtion: count,sum,avg,min,max
+29. ROW_NUMBER() → latest order per customer → ROW_NUMBER() OVER (PARTITION BY CustomerID ORDER BY OrderDate DESC) → keep row number = 1.
+--> RANK():- ties + gaps → merit list: 37, 38, 38, 40 → two people share 38th; next position is 40th. Race: 1, 2, 2, 4 → two share second; no third.
+--> DENSE_RANK():- ties + no gaps → top 3 distinct salary levels → salaries 100k, 90k, 90k, 80k → ranks 1, 2, 2, 3; keep ranks ≤ 3.
+30. ntile()       → divide rows into groups   (customer segmentation)                                    -->percent_rank()→ where am I in the ranking?   (top performers)                                                 -->cume_dist()   → what % are at/below me?     
+31. lag(column [, offset]) → gets value from previous row; offset = rows back (default 1)    -->Current month vs previous month sales,    Current salary vs previous salary    
+32. lead(column [, offset]) → gets value from following row; offset = rows forward (default 1)       -->Loan repayment gaps,        days between a customer's orders; if the next order is NULL after 90 days, flag them as churned.   
 33. first_value(sale) → first sale → compare current sale with first sale                                                                                                                      -->last_value(sale) → last sale → compare current sale with last sale
-34. Index → like a book index → finds rows faster without scanning the whole table → helps WHERE, JOIN, ORDER BY, GROUP BY run faster      Heap No index-->Read performance → create index | Write performance → remove extra indexes (every index slows INSERT/UPDATE/DELETE + uses storage)    
-Rowstore: Clustered (PK/ID), Nonclustered (Foreign Key/date/most search columns), Composite (Category + Product used together like electronic and mobile), Unique (Email), Filtered (Status = 'Shipped'), Nonclustered Columnstore (huge table like 100 column but need specific 1-2 columns for analysis/aggregation like sale)          → Columnstore: Clustered Columnstore: huge fact table, heavy analysis/aggregation → bad for single-row lookups and frequent updates.                                --> how to create index → "C:\Users\thecl\OneDrive\SQL\Indexes.sql"     
-34.1. Index cleanup routine → "C:\Users\thecl\OneDrive\SQL\Monitor.sql" → run every 30 days  -->  Run in order: 1 → 5 → 4 → 4b → 3
-34.1.1 find unused indexes (0 reads, high writes), check history → confirm it wasn't used before last restart (needs 30+ days of data)      find duplicate (same columns) and overlapping (one is the front part of another) Drop unused + duplicates       missing indexes → create only if used regularly, merge similar suggestions                                                                                                                                                                                                     ::-->never drop PK, clustered, unique → save CREATE script before any DROP
-34.2 Fragmentation → how efficiently SQL Server can read an index's data pages    Cause → INSERT/UPDATE/DELETE split pages → pages end up out of order and half empty      Effect → like a book with scattered, half-empty pages → more pages read, slower scans    Only check indexes over 1000 pages (small ones don't matter)       Under 5% → OK | 5-30% → REORGANIZE (light cleanup) | Over 30% → REBUILD (rewrite from scratch)
-34.3 Statistics - how accurately SQL Server estimates how many rows a query will return                  Think of a book's index telling you that a topic appears on 10 pages when it actually appears on 10,000. SQL Server may choose an inefficient execution plan.                        (only tables over 10k rows)                         Update weekly + after every big load → stale stats = bad row guesses = slow queries even with good indexes         when use A large amount of data has been inserted, updated, or deleted. You have loaded a new batch of data through ETL.A query's estimated row counts differ significantly from its actual row counts. Query performance has deteriorated and stale statistics are a plausible cause. Statistics have not been updated adequately by automatic maintenance.
-          
-dimetion and measure measure naumberc and make sence to aggeste folloew both rule measure else dim
-elxpre db   informationdchema  .table column        select * from is.colmn where TABLE_NAME = ""
 
-01. null handling --> handle null before aggregation, calculations, and joins → aggregation: avg(100, 200, null) = 150, but avg(100, 200, isnull(null, 0)) = 100 → calculation: 1 + null = null, 'abc' + null = null → use isnull/coalesce when null should be treated as a value → joining: null join keys do not match with =, so handle them carefully before joining       Ask compny null rule
-02. when join company must check index to improve perforce by remve unused
-34. Subquery   → NO data stored → one query only
-               → Non-correlated: inner runs once, independent | used in SELECT, FROM, WHERE, JOIN, IN, ALL, ANY, EXISTS
-               → Correlated: inner runs per outer row (slower) | WHERE salary > (SELECT AVG(salary) FROM emp e2 WHERE e2.dept = e.dept)
-               → use: quick filter, small task | gets unreadable as you nest more
+34. Subquery:- NO data stored              → use: quick filter, small task                                        →gets unreadable as you nest more 
+ → Non-correlated: inner runs once, independent | used in SELECT, FROM, WHERE, JOIN, IN, ALL, ANY, EXISTS     → Correlated: inner runs per outer row (slower) | WHERE salary > (SELECT AVG(salary) FROM emp e2 WHERE e2.dept = e.dept)   
+35. CTE:- NO data stored                        → Types:- Standalone | Multiple | Recursive                 → Runs only when refrenced in main qurey:- referenced 2 times = runs 2 times 
+-->Recursive (start + repeat + stop):-   WITH Numbers AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM Numbers WHERE n < 5) SELECT n FROM Numbers → 1,2,3,4,5       -->Uses:- hierarchy/org chart, fill missing dates      
+-->Standalone:- one CTE → WITH saleCte AS (…) SELECT … FROM saleCte           -->Multiple independent:- separate CTEs → WITH saleCte AS (…), priceCte AS (…) → join/use results           -->Multiple dependent:- later CTE uses earlier → WITH saleCte AS (…), priceCte AS (SELECT … FROM saleCte)     
+-->Uses:- make big queries readable; break complex queries into steps. 
+      
+36. View:- saved query → definition stored, no data stored in memory. It reads data when queried | CREATE / ALTER / DROP VIEW          → use: simplify (hide JOINs), security (only needed rows/columns), consistency, original table untouched
+37. Temp:- stored data in tempdb → until session ends                  --> #temp = only me | ##temp = everyone 
+--> SELECT CustomerID, SUM(Amount) AS Total INTO #MonthSales FROM Orders GROUP BY CustomerID                                                 → use: test logic, calculate once and reuse, break big query into steps, heavy transformations
+38. CTAS / INTO:- frozen copy in database → permanent until dropped manually                                                                                        → SQL Server: SELECT * INTO new_table FROM old_table 
+→ snapshot, doesn't update when source changes until run again | no keys/indexes copied    → use: backup before UPDATE/DELETE, save cleaned data, ETL staging, freeze month-end numbers
+39. Stored procedure:- NO data stored (runs code) → permanent, saved in database                                                                                   → CREATE PROCEDURE LoadSales @Month DATE AS BEGIN ... END | EXEC LoadSales @Month = '2026-09-01'
+→ takes parameters | INSERT/UPDATE/DELETE | IF/ELSE, loops, TRY/CATCH     → use: multiple steps in one call, ETL, scheduled nightly jobs            
+-------------------------------------------------------------------------------------------------------------------->A view answers a question, a stored procedure does a job<--------------------------------------------------------------------------------------------------------------------------------------------------
 
-35. CTE        → NO data stored → one query only
-               → Standalone | Multiple | Chained (one uses another) | Recursive (start + repeat + stop)
-               → WITH Numbers AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM Numbers WHERE n < 5) SELECT n FROM Numbers → 1,2,3,4,5
-               → referenced 2 times = runs 2 times | SQL Server max 100 levels by default
-               → use: readable big queries, hierarchy/org chart, fill missing dates, sequences
+34. Index → like a book index → finds rows faster without scanning the whole table → helps WHERE, JOIN, ORDER BY, GROUP BY run faster       -->Heap No index when insert data 
+Rowstore: Clustered (PK/ID), Nonclustered (Foreign Key/date/most search columns), Composite (Category + Product used together like electronic and mobile), Unique (Email), Filtered (Status = 'Shipped'), Nonclustered Columnstore (huge table like 100 column but need specific 1-2 columns for analysis/aggregation like sale)          → Columnstore: Clustered Columnstore: huge fact table, heavy analysis/aggregation → bad for single-row lookups and frequent updates.                                --> how to create index → "C:\Users\thecl\OneDrive\SQL\Indexes.sql"
+34.1. Index cleanup → remove indexes that provide little to no benefit                                                                                                                     -->faster writes/loads, less storage and maintenance
+→ Unused: no reads but many writes | Duplicate: two indexes with the same keys → remove one | Overlapping: Like (CustomerID) and (CustomerID, OrderDate) → review whether both are needed or one
+→ When to use Index Cleanup: INSERT/UPDATE/DELETE or ETL loads are slow; too many indexes exist; periodic maintenance
+→ Remember:--- check a full business cycle(History). an index might serve only monthly reports; make sure dont delte primary key
+34.2. Fragmentation → index pages become scattered or partly empty (like book pages out of order with unused space)                                       --> can make large index scans/range filters less efficient
+→ Cause: INSERT/UPDATE can split pages; UPDATE/DELETE can leave empty space
+→ Traditional guide: <5% → leave | 5–30% → consider REORGANIZE (reorder/compact pages) | >30% → consider REBUILD (recreate index) → percentages alone don’t prove maintenance is needed
+→ Effect of fixing: better page organization/density → potentially fewer reads and faster scans; improvement depends on the workload.
+34.3. Statistics → SQL Server’s summary of data distribution → estimates how many rows match a condition                                                        → **Example:** expects 10 rows, receives 100,000 → a plan chosen for a small result may perform poorly  
+→ **When to check:** after large ETL loads/major data changes; slow queries with large differences between estimated and actual rows  
+→ **Update effect:** fresh distribution information → better row estimates → potentially better execution plans  
+→ **Remember:** auto-update usually handles routine changes; wrong estimates don’t always mean statistics are outdated.
 
-36. View       → NO data stored → permanent, always live
-               → saved query, runs fresh every time | CREATE / ALTER / DROP VIEW
-               → materialized view = exception, stores data and refreshes (daily dashboards)
-               → use: simplify (hide JOINs), security (only needed rows/columns), consistency, original table untouched
-
-37. Temp table → YES, stored in tempdb → until session ends
-               → SELECT CustomerID, SUM(Amount) AS Total INTO #MonthSales FROM Orders GROUP BY CustomerID
-               → #temp = only me | ##temp = everyone | CTE = one query, temp table = whole session
-               → use: test logic, calculate once and reuse, break big query into steps, heavy transformations
-
-38. CTAS       → YES, frozen copy in database → permanent until dropped
-               → SQL Server: SELECT * INTO new_table FROM old_table | Fabric/Synapse/Postgres/Snowflake/BigQuery: CREATE TABLE new AS SELECT ...
-               → snapshot, doesn't update when source changes | no keys/indexes copied | new table must not exist
-               → use: backup before UPDATE/DELETE, save cleaned data, ETL staging, freeze month-end numbers
-
-39. Stored proc → NO data stored (runs code) → permanent, saved in database
-                → CREATE PROCEDURE LoadSales @Month DATE AS BEGIN ... END | EXEC LoadSales @Month = '2026-09-01'
-                → takes parameters | INSERT/UPDATE/DELETE | IF/ELSE, loops, TRY/CATCH
-                → use: multiple steps in one call, ETL, scheduled nightly jobs
-
-→ A view answers a question, a stored procedure does a job.
-→ Choose based on who needs the data and for how long, not just speed.
+35. Partitioning:-  split one very big table into smaller by a column (usually date) → you still query ONE table, but SQL reads only the piece it needs → faster queries.   Example → sales table with 100M rows (2020 to 2023) → split by year → each year is its own partition → query for 2022 reads only the 2022 partition, skips the other 75M rows          -->Like a cupboard with one drawer per year → need 2022 → open only that drawer          CREATE PARTITION FUNCTION Sale (DATE)  AS RANGE RIGHT FOR VALUES ('2021-01-01', '2022-01-01', '2023-01-01');
+   
+36. Performance Tips:
+1..Select  
+-->Select only the columns you need, not * → less data read and sent    
+-->Exploring a table → SELECT TOP 5 * | latest rows → SELECT TOP 5 * ... ORDER BY date DESC    
+-->Avoid unnecessary ORDER BY and DISTINCT → both force a sort, very costly on big tables
+2..Filter (WHERE)
+-->use filter or non clusterd index on most frequntly used one like. order = shiped
+-->WHERE YEAR(order_date) = 2026 ❌ → WHERE order_date >= '2026-01-01' AND order_date < '2027-01-01' ✅
+-->WHERE LOWER(name) = 'ali' ❌ → WHERE name = 'ali' ✅ (SQL Server is case insensitive by default, LOWER not needed)
+-->Prefer >= and < over BETWEEN for dates → BETWEEN misses rows with a time part on the last day
+Join & Union
+--> where status = shiped   insted   on c.id = s.id and c.status = shiped    or forbig table use left join(select * from sale where status = shiped) s on c.id = s.id
+-->UNION ALL → fast, no duplicate check | UNION → removes duplicates → extra sort
+Aggregation / Big queries
+-->Heavy aggregation on huge fact table → Columnstore index
+-->Slow complex query → break into steps → SELECT ... INTO #temp → query the temp table (CTAS / INTO)
+-->Partition very large tables (by year / month) → SQL reads only the needed partition
+Table design
+-->VARCHAR(50), not plain VARCHAR → plain VARCHAR = VARCHAR(1) in DECLARE → silently cuts your data
+-->Right size types → don't use NVARCHAR(MAX) for a name, use NVARCHAR only if you need Unicode (Arabic, Urdu)
+-->NOT NULL where data is always required → cleaner data, optimizer works better
+Indexing
+-->Avoid over indexing → every index slows INSERT / UPDATE / DELETE
+-->Drop unused (Monthly.sql) | update statistics weekly + after every big load
+-->Never drop PK, clustered, or unique indexes → save the CREATE script before any DROP
